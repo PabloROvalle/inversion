@@ -4,7 +4,7 @@ module info_content
 
 contains
   
-  subroutine info_content_ch4(p,t,profil,p_mol,lat,mue,fwhm,file_opa,nflux,wave,synthetic)
+  subroutine info_content_ch4(p,t,profil,p_mol,lat,mue,fwhm,file_opa,nflux,wave,synthetic,kk, tau_aer)
 
     use declaration, only : nfreq, nrep, nlevel, nmol, nt, T_tab, gnu00,dgnu,dgnu_H2, dens, planck, rg, avo, cvel, boltz, H2, He
     use gravity
@@ -12,32 +12,28 @@ contains
 
     implicit none
 
-    integer i, j, j1, k, k1, l, it, rec, nin, n
+    integer i, j, j1, k, k1, l, it, rec, nin, n, etat
     integer, intent(in) :: p_mol, nflux
     integer :: repmin, repmax
 
     character (len=68), dimension(nmol), intent(in) :: file_opa
 
-    logical :: calc
-    
     real, intent(in) :: lat, mue
     real :: hc2, hck, dt
     real, dimension(2000) :: ftab
     real, dimension(2000,nlevel) :: tabH2
     real, dimension(nlevel,nmol), intent(in) ::  profil
     real, dimension(nlevel,p_mol) ::  colonne
-    !  real, dimension(:,:) :: kk
-    real, dimension(nlevel), intent(in) :: p, T
+    real, dimension(nflux,nlevel), optional :: kk
+    real, dimension(nlevel), intent(in) :: p, T, tau_aer
     real, dimension(nlevel) :: aux_T, grav, z
     real, dimension(nflux), intent(in) :: wave
     real, dimension(nflux), intent(inout) :: synthetic
-    real, dimension(:,:), allocatable ::  tau, radiance
-    real, dimension(:), allocatable ::  fnu, aux
+    real, dimension(:,:), allocatable ::  tau
+    real, dimension(:), allocatable ::  fnu, aux, radiance
     real, dimension(nfreq,2) :: coef
 	real, dimension(nflux), intent(in) :: fwhm
-
 !------------------------------------------------------------------------------
-    calc=.false.
 
 !---- Domaine de longueur d'onde et nom des fichiers
 
@@ -72,7 +68,7 @@ contains
     print*, nin,'H2'
     if (nin > 2000) stop
     ftab(1:nin) = gnu00 + ((repmin-1)*nfreq)*dgnu + (/(i-2,i=1,nin)/)*dgnu_H2
-    do k = 1,nlevel-1
+    do k = 1, nlevel-1
        call cont_h2he(p,T,H2,He,dens,k,grav(k),ftab,nin,tabH2)
     enddo
     allocate(tau((repmin-1)*nfreq+1:repmax*nfreq,nlevel))
@@ -126,10 +122,17 @@ contains
        close(7+l)
     enddo
 
+!!!!! Hazes !!!!!!
+
+    do k=1, nlevel-1
+       tau(:,k)=tau(:,k)+tau_aer(k)
+    end do
+!    print*, tau_aer
+!!!!!!!!!!!!!!!!!!
+
     do k = nlevel-1, 1, -1
        tau(:,k) = tau(:,k+1) + tau(:,k)
     end do
-
     do k = 1, nlevel
        tau(:,k) = exp(-tau(:,k)/mue)
     end do
@@ -138,49 +141,95 @@ contains
     hck = planck * cvel / boltz
     aux_T = 0.5 * (T+eoshift(T,1,T(size(T)))) / hck
     dt = 1. / hck
-    
-    if (.not. calc) goto 20
+
+    if (.not. present(kk)) goto 20
 !==============================================Derivee temperature
     deallocate(fnu)
     allocate(fnu((repmin-1)*nfreq/10+1:repmax*nfreq/10))
-    fnu = gnu00 + dgnu*10*(/(j, j=(repmin-1)*nfreq/10,repmax*nfreq/10-1)/)
-    allocate(radiance((repmin-1)*nfreq/10+1:repmax*nfreq/10,nlevel))
-    allocate(aux((repmin-1)*nfreq/10+1:repmax*nfreq/10))
+    fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1,10)/)
+    allocate(radiance((repmin-1)*nfreq/10+1:repmax*nfreq/10))
     radiance = 0. 
     do k = 1, nlevel-1
-       aux = (hc2*fnu**3) / (exp(fnu/aux_T(k)) - 1.) * (tau(:,k+1) - tau(:,k))
-       do k1 = 1, nlevel
-          if (k1 == k) then
-             radiance(:,k1) = radiance(:,k1) + (hc2*fnu**3) &
-                  / (exp(fnu/(aux_T(k1)+dt)) - 1.) * (tau(:,k+1) - tau(:,k))
-          else
-             radiance(:,k1) = radiance(:,k1) + aux
-          endif
-       enddo
-    enddo
-!  call convol_jwst(size(radiance(:,nlevel)),radiance(:,nlevel),fwhm,fnu,nflux,wave,synthetic)
-    do k1=1,nlevel-1
-       !     call convol_jwst(radiance(:,k1),n_fnu,fnu,nflux,wave,&
-       !          &kk(:,k1))
-       !     kk(:,k1) = kk(:,k1) - synthetic
-    enddo
+       radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) * (tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-1)*nfreq+1:repmax*nfreq:10,k))
+       call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k))
+    end do
     deallocate(radiance)
-    deallocate(aux)
 
 20  deallocate(fnu)
-    allocate(fnu((repmin-1)*nfreq+1:repmax*nfreq))
+    allocate(fnu((repmin-1)*nfreq+1:repmax*nfreq),stat=etat)
     fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1)/)
-    allocate(radiance((repmin-1)*nfreq+1:repmax*nfreq,1))
-    allocate(aux((repmin-1)*nfreq+1:repmax*nfreq))
-    radiance = 0. 
+    allocate(radiance((repmin-1)*nfreq+1:repmax*nfreq))
+    radiance = 0.
     do k = 1, nlevel-1
-       aux = (hc2*fnu**3) / (exp(fnu/aux_T(k)) - 1.) * (tau(:,k+1) - tau(:,k))
-       radiance(:,1) = radiance(:,1) + aux
+       radiance = radiance + (hc2*fnu**3) / (exp(fnu/aux_T(k)) - 1.) * (tau(:,k+1) - tau(:,k))
     enddo
-    call convol_jwst(size(radiance(:,1)),radiance(:,1),fwhm,fnu,nflux,wave,synthetic)
+    call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,synthetic)
     deallocate(radiance)
-    deallocate(aux)
+    deallocate(fnu)
 
   end subroutine info_content_ch4
 
+
+  subroutine coeur_ch4(dt,sigma,p,nflux,kk,spec_obs,spec_syn,error,A,dr)
+
+    use declaration
+    implicit none
+
+    integer :: i, j, k
+    integer, intent(in) :: nflux
+
+    Real, parameter :: c=0.75, factor=30e-2
+    real :: alpha, beta, dr
+    real :: trace_temp, trace_haze, trace_error
+    real, dimension(nflux), intent(in) :: error, spec_obs, spec_syn
+    real, dimension(nlevel), intent(out) :: dt, sigma
+    real, dimension(nlevel), intent(in) :: p
+    real, dimension(nflux,nlevel), intent(in) :: kk
+    real, dimension(nlevel,nlevel) :: s
+    real, dimension(nlevel,nflux) ::  w, aux3
+    real, dimension(1,nflux) ::  v
+    real, dimension(nflux,nlevel) :: aux
+    real, dimension(nflux,nflux) :: aux1, aux2
+    real, dimension(nlevel,nlevel), intent(out) :: A
+!------------------------------------------------------------------------------
+    do i=1,nlevel
+       do j=1,nlevel
+          s(i,j) = exp( -alog(p(i)/p(j))**2 / (2*c**2))
+       enddo
+    enddo
+
+    trace_error = sum((/(error(i)**2,i=1,nflux)/) / sqrt(real(nflux,kind=4)))
+      
+    aux = matmul(kk,s) !--- Temperature
+    aux1 = matmul(aux,transpose(kk))
+    trace_temp = sum((/(aux1(i,i),i=1,nflux)/))
+    alpha = factor * (trace_error/trace_temp)
+    
+    aux1 = alpha*aux1
+    do i=1,nflux
+       aux1(i,i) = aux1(i,i) + error(i)**2
+    enddo
+
+    call matinv(aux1,nflux,nflux,aux2)
+
+    aux3 = matmul(transpose(kk),aux2)
+    w = matmul(s,aux3)
+    A = alpha * matmul(w,kk)
+    dr = sum((/ (A(i,i), i=1,nlevel) /))
+    write(*,*)'coeur', factor, dr
+    dt = alpha * matmul(w,(spec_obs-spec_syn))
+
+    !-------------------------------------------
+
+        open(unit=202, file='ContFunc.txt', ACTION="write", STATUS="replace")
+    do i=1, nflux
+      write(202, '(1000E13.5)')( real(hh(i,j)) ,j=1,nlevel) !-------------------------------------------
+    end do
+    do i=1, nlevel
+       sigma(i) = alpha * sqrt(dot_product(w(i,:)**2,error**2))
+    end do
+
+  end subroutine coeur_ch4
+
+  
 end module info_content

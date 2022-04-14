@@ -25,11 +25,11 @@ c---BEGIN--PARAMETER DECLARATION-------------------------------------------
 
       real p(361), T(361)
 
-      Real*8  abCH4( 801) ,        ! the opacity as a function of wavenumber
+      Real*8  abCH4(801) ,        ! the opacity as a function of wavenumber
      +                            ! at level  k  due to CH4
-     +        abHel( 801) ,        ! the opacity as a function of wavenumber
+     +        abHel(801) ,        ! the opacity as a function of wavenumber
      +                            ! at level  k  due to He
-     +        abHyd( 801)          ! the opacity as a function of wavenumber
+     +        abHyd(801)          ! the opacity as a function of wavenumber
      +                            ! at level  k  due to H2
 
 
@@ -62,7 +62,7 @@ c--------------------------------------------------------------------------
 c------------------------------------------------------------------------------
       Subroutine H2CIA(abhyd,abhel,abch4,gnu0,gnumax,dgnu,temp)
 
-      Real*8 ABHYD( 801),ABHEL( 801),ABCH4( 801)
+      Real*8 ABHYD(801),ABHEL(801),ABCH4(801)
 
       Call addemh2(abhyd,gnu0,gnumax,dgnu,temp)
       Call addemhe(abhel,gnu0,gnumax,dgnu,temp)
@@ -89,11 +89,11 @@ C     L.TRAFTON, L.FROMMHOLD, G.BIRNBAUM, AP.J. (1985)
 C     TAPE3 IS OUTPUT: HEADER PLUS ABSORPTION COEFF. ALPHA(NU)
 
        Implicit double precision (a-h,o-z)
-       Dimension alfatot( 801)
+       Dimension alfatot(801)
        Real gnu0,gnumax,dgnu,tp
 
       Common /RESULT1/ NF
-      Common /result2/ FREQ( 801),ABSCOEF( 801)
+      Common /result2/ FREQ(801),ABSCOEF(801)
       Common /H2PART1/ AUXIL(5)
       Common /h2part2/ IAUX,NORMAL
 
@@ -107,7 +107,7 @@ C     TAPE3 IS OUTPUT: HEADER PLUS ABSORPTION COEFF. ALPHA(NU)
        dnu=dgnu
 
        NF=INT((FNUMAX-FNUMIN)/DNU+0.5)+1
-       IF (NF.GT. 801) NF= 801
+       IF (NF.GT.801) NF=801
        FNUMAX=FNUMIN+DFLOAT(NF-1)*DNU
 
        Call PARTSUM (TEMP)
@@ -239,7 +239,7 @@ C
       Common /H2PART1/ Q,WH2(2),B0,D0
       Common /h2part2/ JRANGE1,NORMAL
       Common /RESULT1/ NF
-      Common /result2/ FREQ( 801),ABSCOEF( 801)
+      Common /result2/ FREQ(801),ABSCOEF(801)
 
       DATA CLOSCHM,BOLTZWN/2.68675484E19,.6950304/
       DATA HBAR,PI,CLIGHT/1.054588757d-27,3.1415926535898,2.9979250E10/
@@ -520,10 +520,10 @@ C
 C     File out.h2he IS OUTPUT: HEADER PLUS ABSORPTION COEFF. ALPHA(NU)
 C
 	implicit double precision (a-h,o-z)
-	dimension alfatot( 801)
+	dimension alfatot(801)
 	real gnu0,gnumax,dgnu,tp
       COMMON /RESULT1/ NF
-      common /result2/ FREQ( 801),ABSCOEF( 801)
+      common /result2/ FREQ(801),ABSCOEF(801)
       Y(X,A,B,C,D)=A*DEXP(B*X + C*X*X + D*X*X*X)
 	fnumin=gnu0
 	fnumax=gnumax
@@ -532,7 +532,7 @@ C
 c
 C
       NF=INT((FNUMAX-FNUMIN)/DNU+0.5)+1
-      IF (NF.GT. 801) NF= 801
+      IF (NF.GT.801) NF=801
       FNUMAX=FNUMIN+DFLOAT(NF-1)*DNU
 	if(temp.le.40.d0 .or. temp.gt.3000.d0) stop 4444
       CALL PARTSUM (TEMP)
@@ -612,7 +612,7 @@ C
       COMMON /H2PART1/ Q,WH2(2),B0,D0
 	COMMON /H2PART2/ JRANGE1,NORMAL
       COMMON /RESULT1/ NF
-      common /result2/ FREQ( 801),ABSCOEF( 801)
+      common /result2/ FREQ(801),ABSCOEF(801)
       DATA CLOSCHM,BOLTZWN/2.68675484E19,.6950304/
       DATA HBAR,PI,CLIGHT/1.054588757d-27,3.1415926535898,2.9979250E10/
       EH2(N,I)=4395.34*(DFLOAT(N)+0.5)-117.905*(DFLOAT(N)+0.5)**2
@@ -870,7 +870,7 @@ C
       COMMON /BF/ G0BF,DELBF,OM0
       COMMON /STATI/ QW3(51,3),QW4(51,4)
       COMMON /LIKE/ LIKE,LGAS
-      DIMENSION FREQ( 801), ABSCOEF( 801), ALFATOT( 801)
+      DIMENSION FREQ(801), ABSCOEF(801), ALFATOT(801)
       DIMENSION RSI(201), RSIGG(201), TT(2), SS(1), OMEG(201), AIG(201)
 c      DATA TEMP/70.D0/
 c      DATA FNUMIN/10.D0/
@@ -890,7 +890,7 @@ c
       dnu=dgnu
 
       NF=INT((FNUMAX-FNUMIN)/DNU+0.5)+1
-      IF (NF.GT. 801) NF= 801
+      IF (NF.GT.801) NF=801
       FNUMAX=FNUMIN+DFLOAT(NF-1)*DNU
       CALL PARTSUMCH (TEMP)
 C

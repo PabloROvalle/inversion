@@ -19,9 +19,9 @@ contains
 !------------------------------------------------------------------------------
     do i=1, nflux
        where (abs(fnu - wave(i)) < 5*fwhm(i))
-          aux = 2**(-((fnu-wave(i))/(fwhm(i)/2))**2)
+          aux = 2**(-((fnu-wave(i))/fwhm(i)/2)**2)
        elsewhere
-          aux = 0
+          aux = 0.
        end where
        synthetic(i) = sum(radiance*aux) / sum(aux)
     enddo
