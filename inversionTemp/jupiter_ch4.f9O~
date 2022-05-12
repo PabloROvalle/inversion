@@ -1,0 +1,98 @@
+program saturne_nadir
+
+  use interface, only : info_content_nadir
+  use declaration, only : nlevel, nmol, dens_H2, dens_He, dens_CH4, rg
+  implicit None
+
+  integer :: i, it, j, j1, k, k1, l, n, tnmol, rec, err
+  integer :: nflux
+
+  logical :: calc
+
+  character (len=7) :: gas, apod_type
+  character (len=48), dimension(nmol) :: fichier
+  character (len=38) :: dump
+  real :: mui, mue, rayleigh, lat, H2, He, dens
+  real, dimension(:,:), allocatable :: kk
+  real, dimension(nmol) :: vmr
+  real, dimension(nlevel,nmol) :: profil
+  real, dimension(nlevel) :: p, t, tau_haze, z, grav
+  real, dimension(:), allocatable :: wave, spectre
+!==============================================================================
+  open(15,file='saturne.fuel',status='old',form='formatted')
+  read(15,'(F7.3)')lat ; read(15,'(F7.3)')mui ; read(15,'(F7.3)')mue
+  read(15,*) ; read(15,*)
+  read(15,'(F7.3)')rayleigh ; read(15,'(A7)') apod_type ;  read(15,*) 
+  read(15,*) H2 ; read(15,*) He
+  read(15,'(I2)')tnmol
+  write(*,'(F7.3)')lat ; write(*,'(F7.3)')mui ; write(*,'(F7.3)')mue
+  write(*,*) ; write(*,*)
+  write(*,'(F7.3)')rayleigh ; write(*,'(A7)') apod_type ;  write(*,*) 
+  write(*,*) H2 ; write(*,*) He
+  write(*,'(I2)')tnmol
+  do l = 1, tnmol
+     read(15,'(A7,E10.3)')gas,vmr(l)
+     write(*,'(A7,1PE10.3)')gas,vmr(l)
+     dump = '                                                   '
+     dump(1:29) = '/data/opacite/saturn/saturne_'
+     dump(30:34) = gas
+     fichier(l) = dump
+  end do
+  close(15)
+!----Profil pta
+  open(9,file='saturne.pta',status='old',form='formatted')
+  do k=1, nlevel
+     read(9,'(E9.2,F6.1,6E9.2)') p(k), T(k), (profil(k,l), l=1,tnmol), &
+          tau_haze(k)
+  enddo
+  do l=1, tnmol
+     profil(:,l) = profil(:,l) * vmr(l)
+  enddo
+
+!----Longueur d'onde
+  open(12,file='saturne.spe',status='old',form='formatted')
+  read(12,*) nflux
+  allocate(wave(nflux),spectre(nflux))
+  do j=1, nflux
+     read(12,*) wave(j)
+  enddo
+  close(12)
+!----Calcul spectre
+  calc = .false.
+  allocate(kk(1,1))
+  kk = 0.
+  call info_content_nadir(p,t,profil,tnmol,tau_haze,H2,He,lat,fichier,&
+       mue,nflux,rayleigh,apod_type,wave,spectre,kk,calc)
+
+!---- Grille d'altitude et de gravite
+  dens = H2*dens_H2 + He*dens_He + (1.-H2-He)*dens_CH4
+  z(41) = 0.
+  do k=41, nlevel-1
+     call newgrav(lat,z(k)/1e3,grav(k))
+     z(k+1) = z(k) + (rg*(T(k)+T(k+1))/2./dens/grav(k))&
+          *alog(p(k)/p(k+1))
+  enddo
+  call newgrav(lat,z(nlevel)/1e3,grav(nlevel))
+  do k=41, 2, -1
+     call newgrav(lat,z(k)/1e3,grav(k))
+     z(k-1) = z(k) + (rg*(T(k)+T(k-1))/2./dens/grav(k)) &
+          *alog(p(k)/p(k-1))
+  enddo
+  call newgrav(lat,z(1)/1e3,grav(1))
+
+!---fichier profil
+  open(12,file='saturne.inv',form='formatted',status='unknown')
+  do k=1,nlevel
+     write(12,*)p(k), t(k), tau_haze(k), z(k), grav(k)
+  enddo
+  close(12)
+
+!---fichiers spectre
+  open(17,file='saturne.res',form='formatted',status='unknown')
+  write(17,*)nflux
+  do j=1, nflux
+     write(17,*) wave(j), spectre(j)
+  enddo
+  close(17)
+
+end program saturne_nadir
