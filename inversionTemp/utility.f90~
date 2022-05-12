@@ -1,0 +1,87 @@
+module utility
+
+  implicit none
+  
+contains
+
+!********************************************************************************
+!********************************************************************************
+!-------------------------------------------------------------------------------
+!
+!                           FUNCTION LEGPOL
+!
+!      Calculates zero order Legendre polynomials based on the recurrence
+!      relation 
+!               (n) P   (z) = (2n-1) z P    (z) - (n-1) P     (z).
+!                    (n)                (n-1)            (n-2)
+!
+!-------------------------------------------------------------------------------
+
+  function legpol (n, z)
+      
+    implicit none
+    integer :: I
+    integer, intent(in) :: n
+    real, intent(in) :: z
+    real :: legpol
+    real, dimension(3) :: pol
+
+    pol(1) = 1.
+    pol(2) = z
+
+    if ((n==0).or.(n==1)) then
+       legpol = pol(n+1)
+    else
+       I = 1
+10     I = I + 1
+
+       if (I>50) then
+          write (*,*) '* * * * * * * * * * * * *'
+          write (*,*) '*                       *'
+          write (*,*) '*   Looping in LEGPOL   *'
+          write (*,*) '*   Program terminated  *'
+          write (*,*) '*                       *'
+          write (*,*) '* * * * * * * * * * * * *'
+       endif
+
+       pol(3) = (((2 * I - 1) * pol(2) * z)  - ((I - 1) * pol(1)))/float(I)
+       if (I==n) then
+          legpol = pol(3)
+          return
+       else
+          pol(1) = pol(2)
+          pol(2) = pol(3)
+          goto 10
+       endif
+    endif
+
+
+  end function legpol
+
+
+!********************************************************************************
+!********************************************************************************
+
+!-------------------------------------------------------------------------------
+!
+!                           FUNCTION THETAGC
+!
+!      Converts planetographic latitude to planetocentric. Angles must be
+!      supplied in radians.
+!
+!-------------------------------------------------------------------------------
+
+  function thetagc (lat, e)
+
+    implicit none
+    real, intent(in) :: e, lat
+    real :: thetagc
+      
+    thetagc = atan(tan(lat)/e**2)
+
+  end function thetagc
+
+
+!********************************************************************************
+!********************************************************************************
+end module utility

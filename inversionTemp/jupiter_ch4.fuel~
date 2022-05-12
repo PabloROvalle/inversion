@@ -1,0 +1,9 @@
+-12.758 ! latitude (degree)
+  1.000 ! 1./cos(incidence angle)
+  1.000 ! 1./cos(emergence angle)
+
+  0.500 ! fwhm (cm-1)
+
+    ch4 1.000E+00
+   ch3d 1.000E+00
+   c2h2 1.000E+00
