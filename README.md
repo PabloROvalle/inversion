@@ -58,7 +58,7 @@ As an introduction to the inversion algorithm (we use the code implemented in Co
 
 EQUATION
 
-![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;x=\frac{-b\pm\sqrt{b^2-4ac}}{2a})
+https://latex.codecogs.com/svg.latex?\Large&space;\Delta I_{i}=\sum_{j=1}^{n} \frac{\partial I_{i}}{\partial x_{1, j}} \Delta x_{1, j}+\sum_{j=1}^{n} \frac{\partial I_{i}}{\partial x_{2, j}} \Delta x_{2, j}
 
 If we develop the equation, we can calculate the jacobian and store it in the kk array, a 3D array in which every slice stores the jacobian of the vectors that want to be inverted. The calculation of the jacobians fot the temperature and the abundances is:
 
