@@ -187,3 +187,5 @@ Finally, after the inversion you will get new .res, .inv, .avg and .sum files. I
 
 With this you know the basis of the code. 
 If used, please cite some of the original authors of the code (Ex: Fouchet et al. 2000)
+
+Last mod: 15th May 2022 Pablo Rodriguez Ovalle
