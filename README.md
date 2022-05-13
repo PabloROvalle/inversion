@@ -58,6 +58,8 @@ As an introduction to the inversion algorithm (we use the code implemented in Co
 
 EQUATION
 
+https://latex.codecogs.com/svg.latex?\Large&space;x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}
+
 If we develop the equation, we can calculate the jacobian and store it in the kk array, a 3D array in which every slice stores the jacobian of the vectors that want to be inverted. The calculation of the jacobians fot the temperature and the abundances is:
 
     do l=1, p_mol
@@ -83,4 +85,4 @@ If we develop the equation, we can calculate the jacobian and store it in the kk
 
 ## Inversion algorithm
 
-$\alpha$
+
