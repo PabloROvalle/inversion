@@ -57,6 +57,8 @@ Here you see the convolution and the interpolation routines without the part of 
 As an introduction to the inversion algorithm (we use the code implemented in Conrath et al. 1998) we have to calculate the jacobian matrixes of the vectors we want to retrieve (for example the temperature and the abundances). The way to calculate several vectors, called x and y, they are calculated by following the next equation:
 
 ![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;I_{i}=\sum_{j=1}^{n}%20\frac{\partial%20I_{i}}{\partial%20x_{1,%20j}}%20\Delta%20x_{1,%20j}+\sum_{j=1}^{n}%20\frac{\partial%20I_{i}}{\partial%20x_{2,%20j}}%20\Delta%20x_{2,%20j})
+
+
 If we develop the equation, we can calculate the jacobian and store it in the kk array, a 3D array in which every slice stores the jacobian of the vectors that want to be inverted. The calculation of the jacobians fot the temperature and the abundances is:
 
     do l=1, p_mol
