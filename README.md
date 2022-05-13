@@ -185,4 +185,5 @@ Finally, after the inversion you will get new .res, .inv, .avg and .sum files. I
   	0.63E+01 295.4 0.251E-03 NaN       0.386E-03 0.208E-03
                                ...
 
-With this you know the basis of the code.
+With this you know the basis of the code. 
+If used, please cite some of the original authors of the code (Ex: Fouchet et al. 2000)
