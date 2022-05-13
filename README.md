@@ -80,3 +80,7 @@ If we develop the equation, we can calculate the jacobian and store it in the kk
        ii = ii + 1
      endif
     enddo
+
+## Inversion algorithm
+
+\alpha
