@@ -88,10 +88,12 @@ program jupiter_ch4
     enddo  
   end if  
 
-!======= Write the summary of the inversion: number iterations, chi2 and degrees of freedom
+  print*, 'chiiiii2'
+  print*, niter
+
   if (n_inv /= 0) then
     open(129,file='jupiter_ch4.sum',status='unknown',form='formatted')
-    write(129,'(I4)')(niter)
+    write(129,'(I3)')(niter)
     write(129,'(F12.3)')(chi2)
     write(129,'(10F6.3)')(dr(:))
     close(129)

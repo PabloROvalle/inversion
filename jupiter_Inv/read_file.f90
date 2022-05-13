@@ -4,7 +4,7 @@ module read_file
   
 contains
 
-  subroutine read_fuel(file_in,lat,mui,mue,p_mol,vmr,inv,file_opa, nummol)
+  subroutine read_fuel(file_in,lat,mui,mue,p_mol,vmr,inv,arr_inv,file_opa)
     
     use declaration, only : nmol, file_root
     implicit None
@@ -12,11 +12,13 @@ contains
     character (len=7) :: gas
     character (len=*), intent(in) :: file_in
     character (len=*), dimension(nmol), intent(out) :: file_opa
-    integer :: l, eof
-    integer, intent(out) :: p_mol, nummol
+    integer :: l, eof, ninv2
+    integer, intent(out) :: p_mol
     integer, dimension(nmol), intent(out) :: inv
+    integer, dimension(nmol), intent(out) :: arr_inv
     real, intent(out) :: mui, mue, lat
     real, dimension(nmol), intent(out) :: vmr
+
 !=============================================================================
     open(15,file=file_in,status='old',form='formatted')
     read(15,'(F7.3)')lat ; read(15,'(F7.3)')mui ; read(15,'(F7.3)')mue
@@ -26,16 +28,21 @@ contains
     
     do l=1, nmol
        read(15,'(A7,E10.3,I2)',iostat=eof)gas, vmr(l), inv(l)
-       if (inv(l)==2) nummol = l
        if (eof /= 0) exit
        file_opa(l) = file_root // trim(adjustl(gas)) // '.opa'
        p_mol = l
     end do
     close(15)
 
+  ninv2 = count(inv>0)
+
+  do l=1, nmol
+       if (inv(l)>0) arr_inv(l) = 1
+  end do
+
   end subroutine read_fuel
 
-  subroutine read_pta(file_in,p_mol,vmr,p,T,profil)
+  subroutine read_pta(file_in,p_mol,vmr,p,T,profil,taucloud)
 
     use declaration, only : nmol, nlevel
 
@@ -44,13 +51,13 @@ contains
     integer, intent(in) :: p_mol
     integer :: k,l
     real, dimension(nmol), intent(in) :: vmr
-    real, dimension(nlevel), intent(out) :: p, T
+    real, dimension(nlevel), intent(out) :: p, T, taucloud
     real, dimension(nlevel,nmol), intent(out) :: profil
 
     !====================================================
     open(9,file=file_in,status='old',form='formatted')
     do k=1, nlevel
-       read(9,'(E9.2,F6.1,10E9.2)') p(k), T(k), (profil(k,l),l=1,p_mol)
+       read(9,'(E9.2,F6.1,10E9.2)') p(k), T(k), (profil(k,l),l=1,p_mol), taucloud(k)
     end do
 
     do l=1, p_mol
@@ -95,43 +102,51 @@ contains
 
   end subroutine write_res
   
-  subroutine write_inv(file_out,p,profil,sigma_vmr, nummol, vmr, t, sigma, inv)
+  subroutine write_inv(file_out,p,t,profil,sigma,n_inv,inv_pos,vmr)
 
     use declaration, only: nlevel, nmol
     implicit none
 
-    integer :: j, molecule
+    integer :: j
     character (len=*), intent(in) :: file_out
-    integer, intent(in) :: nummol
-    integer, dimension(nmol), intent(in) :: inv
-    real, dimension(nlevel), intent(in) :: p, sigma, t
+    integer, intent(in) :: n_inv
+    real, dimension(nlevel), intent(in) :: p, t
+    real, dimension(nlevel,n_inv), intent(in) :: sigma
+    integer, dimension(n_inv), intent(in) :: inv_pos
     real, dimension(nlevel, nmol), intent(in) :: profil
     real, dimension(nmol), intent(in) :: vmr
-    real, dimension(nlevel,count(inv>1)), intent(in) :: sigma_vmr
-    
-    molecule = 5
-    
+
     open(12,file=file_out,status='unknown',form='formatted')
     do j=1, nlevel
-       write(12,'(E10.2,F6.1,F6.1,5E10.2,5E10.2)') p(j), t(j),sigma(j), profil(j,molecule)/vmr(molecule)
+       write(12,'(E10.2,F6.1,16E10.3)') p(j),t(j),profil(j,inv_pos)/vmr(inv_pos), sigma(j,:)
     enddo
     close(12)
 
   end subroutine write_inv
   
-  subroutine write_kernel(file_out,A)
+  subroutine write_kernel(file_out,n_inv,A)
 
     use declaration, only: nlevel
     implicit none
 
-    integer i, j
+    integer i, j, ii, l
     character (len=*), intent(in) :: file_out
-    real, dimension(nlevel,nlevel), intent(in) :: A
+    integer, intent(in) :: n_inv
+    real, dimension(nlevel,nlevel, n_inv), intent(in) :: A
+    integer, dimension(nlevel, n_inv) :: kernel
+    real, dimension(nlevel) :: aux
 
-    open(12,file=file_out,ACTION = 'write')
-       do i=1, nlevel
-         write(12, '(1000E13.5)')( real(A(i,j)) ,j=1,nlevel)
-       end do
+    do ii = 1, n_inv
+    	do l = 1, nlevel
+    	   aux = A(:,l,ii)
+    	   kernel(l,ii) = maxloc(aux, DIM = 1)
+    	end do
+    end do
+
+    open(12,file=file_out,ACTION = 'write') 	
+    do i=1, nlevel
+        write(12, '(10F6.1)')(i, kernel(i,:)) 
+    end do
     close(12)
 
   end subroutine write_kernel
@@ -147,7 +162,7 @@ contains
 	real, dimension(:), allocatable, intent(out) :: fwhm 
        
 	
-	open (unit=33, file='jwst_resol.txt', status='old', action='read')
+	open (unit=33, file='resolution.txt', status='old', action='read')
 	read(33,*) filesize
 	allocate (f(filesize), k(filesize))
 	do i=1,filesize

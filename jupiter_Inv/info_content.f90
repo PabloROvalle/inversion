@@ -4,7 +4,7 @@ module info_content
 
 contains
   
-  subroutine info_content_ch4(p,t,profil,p_mol,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,imol_inv,xm,xt,kk)
+  subroutine info_content_ch4(p,t,profil,p_mol,taucloud,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,kk)
 
     use declaration, only : nfreq, nrep, nlevel, nmol, nt, T_tab, gnu00,dgnu,dgnu_H2, dens, planck, rg, avo, cvel, boltz, H2, He
     use gravity
@@ -12,12 +12,10 @@ contains
 
     implicit none
 
-    integer :: i, j, j1, k, l, it, nin, rec, n, etat, ii
-    integer, intent(out) :: xm,xt
+    integer :: i, j, j1, k, l, it, nin, rec, n, ii, ix, numinv
     integer, intent(in) :: p_mol, nflux, n_inv
     integer, intent(in), dimension(p_mol) :: inv
-    integer :: repmin, repmax
-    integer, intent(out) :: imol_inv
+    integer :: repmin, repmax, imol_inv, shift
 
     character (len=*), dimension(nmol), intent(in) :: file_opa
 
@@ -28,7 +26,7 @@ contains
     real, dimension(nlevel,nmol), intent(in) ::  profil
     real, dimension(nlevel,p_mol) ::  colonne
     real, dimension(nflux,nlevel,n_inv), optional :: kk
-    real, dimension(nlevel), intent(in) :: p, T
+    real, dimension(nlevel), intent(in) :: p, T,taucloud
     real, dimension(nlevel) :: aux_T, grav, z, nz, f
     real, dimension(nflux), intent(in) :: wave, fwhm
     real, dimension(nflux), intent(inout) :: synthetic
@@ -37,8 +35,7 @@ contains
     real, dimension(:), allocatable ::  fnu, aux, radiance
     real, dimension(nfreq,2) :: coef
 !------------------------------------------------------------------------------
-    xt = count(inv>0)
-    xm = count(inv>1)
+
 !---- Domaine de longueur d'onde et nom des fichiers
 
 !----Bornes des calculs
@@ -67,7 +64,7 @@ contains
     colonne = (colonne-eoshift(colonne,shift=1)) * profil
     colonne = (avo*1e5/2.6868e19/1e4/dens) * colonne &
          / reshape(grav,(/nlevel,p_mol/),pad=grav) 
-    !----Epaissseur optique
+!----Epaissseur optique
     nin = ceiling(nfreq*(repmax-repmin+1)*dgnu / dgnu_H2) + 2
     print*, nin,'H2'
     if (nin > 2000) stop
@@ -76,7 +73,9 @@ contains
        call cont_h2he(p,T,H2,He,dens,k,grav(k),ftab,nin,tabH2)
     enddo
     allocate(tau((repmin-1)*nfreq+1:repmax*nfreq,nlevel))
-    if (maxval(inv) == 2) allocate(kappa((repmin-1)*nfreq+1:repmax*nfreq,nlevel,xm))
+
+    if (maxval(inv) == 2) allocate(kappa((repmin-1)*nfreq+1:repmax*nfreq,nlevel,n_inv))
+
     allocate(fnu((repmin-1)*nfreq+1:repmax*nfreq))
     fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1)/)
 
@@ -95,8 +94,8 @@ contains
        open(7+l,file=file_opa(l),access='direct',recl=nfreq,status='old',&
             form='unformatted')
     enddo
+
     do k = 1, nlevel
-       ii = 1
        do it = 1, nt
           if (T(k)<t_tab(it,k)) exit
        enddo
@@ -113,17 +112,21 @@ contains
           dt = (T(k) - t_tab(it,k)) / (t_tab(it+1,k)-t_tab(it,k))
        end if
        rec = (it + (k-1)*nt - 1) * nrep
-
+       ii = 1
        do l = 1,p_mol
+         imol_inv = sum(inv(1:l))/2
          do n = repmin, repmax
             j1 = (n-1) * nfreq
             read(7+l, rec=rec+n) coef(:,1)
             read(7+l, rec=rec+n+nrep) coef(:,2)
+
             if (inv(l) == 2) then
-                kappa(j1+1:j1+nfreq,k,ii) = (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
-	    end if
+                 kappa(j1+1:j1+nfreq,k,ii) = (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
+            end if
+
             tau(j1+1:j1+nfreq,k) = tau(j1+1:j1+nfreq,k) + (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
-          enddo
+         enddo
+      
        if (inv(l)==2) then
           ii = ii+1
        endif
@@ -133,6 +136,15 @@ contains
     do l = 1, p_mol
        close(7+l)
     enddo
+
+!!!!! Hazes / Clouds !!!!!!
+
+    do k=1, nlevel-1
+       tau(:,k)=tau(:,k)+taucloud(k)
+    end do
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     do k = nlevel-1, 1, -1
        tau(:,k) = tau(:,k+1) + tau(:,k)
     end do
@@ -165,80 +177,73 @@ contains
     call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,synthetic)
     deallocate(radiance)
     deallocate(fnu)
-    ii = 1
 
     if (n_inv == 0) return
     
     allocate(fnu((repmin-1)*nfreq/10+1:repmax*nfreq/10))
     fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1,10)/)
-    allocate(radiance((repmin-1)*nfreq/10+1:repmax*nfreq/10))
+    allocate(radiance((repmin-1)*nfreq/10+1:repmax*nfreq/10)) 
+    ii = 1
 
-    do l=1, p_mol  
+    numinv = sum(inv)
+    shift = 0   
+    if (MOD(numinv,2) .eq. 0) then
+    	shift = 0
+    else
+        shift = 1
+    end if
+
+    do l=1, p_mol
      if (inv(l) == 1) then
 !==============================================Derivee temperature
          do k = 1, nlevel-1
-            radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) * (tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-1)*nfreq+1:repmax*nfreq:10,k))
-            call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,ii))
+            radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) *(tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-1)*nfreq+1:repmax*nfreq:10,k))
+            call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,1))
          end do
-         ii = ii+1
-      elseif (inv(l) == 2) then
+
+     elseif (inv(l) == 2) then
 !==============================================Derivee abondance
-         imol_inv = 1
          radiance = 0
          do k=1, nlevel-2
             radiance = radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:10,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
-            call convol_jwst(size(radiance),radiance*kappa(::10,k,imol_inv)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii))
+            call convol_jwst(size(radiance),radiance*kappa(::10,k,ii)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
          enddo
-         imol_inv = imol_inv+1
-         ii = ii+1
-      endif
-     enddo
-     
+      ii = ii + 1
+     endif
+    enddo
+!==============================================
 
-     open(unit=202, file='ContFunc.txt', ACTION="write", STATUS="replace")
-     do i=1, nflux
-       write(202, '(1000E13.5)')( real(kk(i,j,1)) ,j=1,nlevel)
-     end do
-
-     open(unit=272, file='ContFunc2.txt', ACTION="write", STATUS="replace")
-     do i=1, nflux
-       write(272, '(1000E13.5)')( real(kk(i,j,2)) ,j=1,nlevel)
-     end do
-  
 !**************************
-!    do k = 1, nlevel-1
-!       kk(:,k,:) = f(k)*kk(:,k,:)
-!    enddo
+    do k = 1, nlevel-1
+       kk(:,k,:) = f(k)*kk(:,k,:)
+    enddo
 !**************************
 
   end subroutine info_content_ch4
 
-
-  subroutine coeur_ch4(dvmr,dt,sigma,sigma_vmr,A,p,nflux,p_mol,inv,xm,xt,kk,spec_obs,spec_syn,error)
+  subroutine coeur_ch4(delta,sigma,A,dr,p,nflux,n_inv,kk,spec_obs,spec_syn,error)
 
     use declaration
     implicit none
 
-    integer :: i, j, k, m
-    integer, intent(in) :: p_mol
-    integer, intent(in) :: nflux, xm, xt
-    integer, intent(in), dimension(p_mol) :: inv
+    integer :: i, j, k, ii
+    integer, intent(in) :: nflux, n_inv
 
     Real, parameter :: c=0.75, factor=30e-1
-    real :: beta
+
     real :: trace_haze, trace_error
-    real, dimension(xt) :: trace_temp, alpha
+    real, dimension(n_inv) :: trace_temp, alpha
     real, dimension(nflux), intent(in) :: error, spec_obs, spec_syn
-    real, dimension(nlevel), intent(out) :: dt, sigma
-    real, dimension(nlevel, xm), intent(out) :: dvmr, sigma_vmr
+    real, dimension(nlevel, n_inv), intent(out) :: delta, sigma
+    real, dimension(n_inv), intent(out) :: dr
     real, dimension(nlevel), intent(in) :: p
-    real, dimension(nflux,nlevel, xt), intent(in) :: kk
+    real, dimension(nflux,nlevel, n_inv), intent(in) :: kk
     real, dimension(nlevel,nlevel) :: s
-    real, dimension(nlevel,nflux, xt) ::  w, aux3
-    real, dimension(nlevel,nlevel, xt), intent(out) :: A
-    real, dimension(1,nflux) ::  v
-    real, dimension(nflux,nlevel, xt) :: aux
-    real, dimension(nflux,nflux, xt) :: aux1, aux2
+    real, dimension(nlevel,nflux, n_inv) ::  w, aux3
+    real, dimension(nlevel,nlevel, n_inv), intent(out) :: A
+    real, dimension(nflux,nlevel, n_inv) :: aux
+    real, dimension(nflux,nflux, n_inv) :: aux1
+    real, dimension(nflux,nflux) :: aux1x, aux2
 !------------------------------------------------------------------------------
     do i=1,nlevel
        do j=1,nlevel
@@ -247,38 +252,41 @@ contains
     enddo
 
     trace_error = sum((/(error(i)**2,i=1,nflux)/) / sqrt(real(nflux,kind=4)))
- 
-    do m = 1, xt 
-    	aux(:,:,m) = matmul(kk(:,:,m),s(:,:))
-    	aux1(:,:,m) = matmul(aux(:,:,m),transpose(kk(:,:,m)))
-    	trace_temp(m) = sum((/(aux1(i,i,m),i=1,nflux)/))
-    	alpha(m) = factor * (trace_error/trace_temp(m))  
+    
+    do ii=1, n_inv  
+    	aux(:,:,ii) = matmul(kk(:,:,ii),s) 
+    	aux1(:,:,ii) = matmul(aux(:,:,ii),transpose(kk(:,:,ii)))
+    	trace_temp(ii) = sum((/(aux1(i,i,ii),i=1,nflux)/))
+    	alpha(ii) = factor * (trace_error/trace_temp(ii))
+        aux1(:,:,ii) = alpha(ii)*aux1(:,:,ii)
+    end do
      
-    	aux1(:,:,m) = alpha(m)*aux1(:,:,m)
-    	do i=1,nflux
-       	    aux1(i,i,m) = aux1(i,i,m) + error(i)**2
-    	enddo
+    aux1x = 0
+    do ii =1, n_inv
+    	aux1x = aux1x + aux1(:,:,ii)
+    end do
 
-    	call matinv(aux1(:,:,m),nflux,nflux,aux2(:,:,m))
+    do i=1,nflux
+       aux1x(i,i) = aux1x(i,i) + error(i)**2
+    enddo
 
-    	aux3(:,:,m) = matmul(transpose(kk(:,:,m)),aux2(:,:,m))
-    	w(:,:,m) = matmul(s,aux3(:,:,m))
-        if (m==1) then
-      	    dt = alpha(m) * matmul(w(:,:,m),(spec_obs-spec_syn))
-        elseif (m>1) then
-            dvmr(:,m) = alpha(m) * matmul(w(:,:,m),(spec_obs-spec_syn))
-        endif
-    	
-    	A(:,:,m) = alpha(m) * matmul(w(:,:,m),kk(:,:,m))
+    call matinv(aux1x,nflux,nflux,aux2)
 
+    do ii=1, n_inv
+    	aux3(:,:,ii) = matmul(transpose(kk(:,:,ii)),aux2)
+    	w(:,:,ii) = matmul(s,aux3(:,:,ii))
+    	delta(:,ii) = alpha(ii) * matmul(w(:,:,ii),(spec_obs-spec_syn))
+    	A(:,:,ii) = alpha(ii) * matmul(w(:,:,ii),kk(:,:,ii))
+        dr(ii) = sum((/ (A(i,i,ii), i=1, size(A, 1)) /))
+    end do    
+
+
+    do ii = 1, n_inv
     	do i=1, nlevel
-            if (m==1) then
-       		sigma(i) = alpha(m) * sqrt(dot_product(w(i,:,m)**2,error**2))
-            elseif (m>1) then
-            	sigma_vmr(i,m) = alpha(m) * sqrt(dot_product(w(i,:,m)**2,error**2))
-            endif
+       	   sigma(i,ii) = alpha(ii) * sqrt(dot_product(w(i,:,ii)**2,error**2))
     	end do
     end do
-  end subroutine coeur_ch4  
 
+  end subroutine coeur_ch4
+  
 end module info_content
