@@ -63,6 +63,7 @@ If we develop the equation, we can calculate the jacobian and store it in the kk
     do l=1, p_mol
      if (inv(l) == 1) then
     !==============================================Derivee temperature
+    
          do k = 1, nlevel-1
             radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) *(tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-       1)*nfreq+1:repmax*nfreq:10,k))
             call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,1))
