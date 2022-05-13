@@ -36,23 +36,46 @@ Here you see the convolution and the interpolation routines without the part of 
 !==========================================================
 
     open (unit=33, file='resolution.txt', status='old', action='read')
-	read(33,*) filesize
-	allocate (f(filesize), k(filesize))
-	do i=1,filesize
-           read(33,*) f(i), k(i)
-        enddo
-	close(1)
+    read(33,*) filesize
+    allocate (f(filesize), k(filesize))
+    do i=1,filesize
+        read(33,*) f(i), k(i)
+    enddo
+    close(1)
+    allocate(xVal(size(wave)))
+    xVal = wave
+    allocate(fwhm(size(wave)))
   
- 	 allocate(xVal(size(wave)))
- 	 xVal = wave
- 	 allocate(fwhm(size(wave)))
-  
-  	 do inputIndex = 1, size(xVal)
-   	    do a = 1, size(f)-1
-	       if (xVal(inputIndex)<=f(a) .AND. (xVal(inputIndex)>=f(a+1))) then
-	          fwhm(inputIndex) = ((xVal(inputIndex) - f(a))/(f(a+1)-f(a)))*(k(a+1)-k(a))+k(a)
-               end if
-            enddo
-         enddo
+     do inputIndex = 1, size(xVal)
+       do a = 1, size(f)-1
+          if (xVal(inputIndex)<=f(a) .AND. (xVal(inputIndex)>=f(a+1))) then
+	     fwhm(inputIndex) = ((xVal(inputIndex) - f(a))/(f(a+1)-f(a)))*(k(a+1)-k(a))+k(a)
+          end if
+       enddo
+     enddo
 
-sds
+As an introduction to the inversion algorithm (we use the code implemented in Conrath et al. 1998) we have to calculate the jacobian matrixes of the vectors we want to retrieve (for example the temperature and the abundances). The way to calculate several vectors, called x and y, they are calculated by following the next equation:
+
+EQUATION
+
+If we develop the equation, we can calculate the jacobian and store it in the kk array, a 3D array in which every slice stores the jacobian of the vectors that want to be inverted. The calculation of the jacobians fot the temperature and the abundances is:
+
+    do l=1, p_mol
+     if (inv(l) == 1) then
+    !==============================================Derivee temperature
+         do k = 1, nlevel-1
+            radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) *(tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-       1)*nfreq+1:repmax*nfreq:10,k))
+            call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,1))
+         end do
+
+     elseif (inv(l) == 2) then
+!==============================================Derivee abondance
+
+         radiance = 0
+         do k=1, nlevel-2
+            radiance = radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:10,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
+            call convol_jwst(size(radiance),radiance*kappa(::10,k,ii)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
+         enddo
+       ii = ii + 1
+     endif
+    enddo
