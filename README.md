@@ -90,3 +90,42 @@ From Conrath et al. 1998, we can finally meet to the final equation needed to re
 ![U=\alpha_1SK_1^T(\alpha_1K_1SK_1^T+\alpha_2K_2SK_2^T+E^2)^{-1}](https://latex.codecogs.com/svg.latex?U=\alpha_1SK_1^T(\alpha_1K_1SK_1^T+\alpha_2K_2SK_2^T+E^2)^{-1})
 
 ![V=\alpha_2SK_2^T(\alpha_1K_1SK_1^T+\alpha_2K_2SK_2^T+E^2)^{-1}](https://latex.codecogs.com/svg.latex?U=\alpha_2SK_2^T(\alpha_1K_1SK_1^T+\alpha_2K_2SK_2^T+E^2)^{-1})
+
+Where alpha is a value that can change its definition, and will affect to the degrees of freedom of our inversion. In our case we define it as the trace of the error divided by the trace of the array K, all multiplied by a factor f that is fitted after trying various inversions with a value around 3. 
+The S array will make that the free vectors will change with a maximum variation of 0.75 scale heights (we can change this by changing the 'c' parameter). The K array is the jacobian, with the sub index identifying it as the jacobian of an specific vector. There will be as many K's as free vectors in our inversion. Other important parameter is the degree of freedom, resulting of the trace of U times K. The amount delta that we have to change our profile can be calculated as U*(spec_obs-spec_syn). The part of the code that does this is the subroutine coeur, in info_content.
+
+    do i=1,nlevel
+       do j=1,nlevel
+           s(i,j) = exp( -alog(p(i)/p(j))**2 / (2*c**2))
+       enddo
+    enddo
+    trace_error = sum((/(error(i)**2,i=1,nflux)/) / sqrt(real(nflux,kind=4)))
+    do ii=1, n_inv  
+    	aux(:,:,ii) = matmul(kk(:,:,ii),s) 
+    	aux1(:,:,ii) = matmul(aux(:,:,ii),transpose(kk(:,:,ii)))
+    	trace_temp(ii) = sum((/(aux1(i,i,ii),i=1,nflux)/))
+    	alpha(ii) = factor * (trace_error/trace_temp(ii))
+        aux1(:,:,ii) = alpha(ii)*aux1(:,:,ii)
+    end do
+    aux1x = 0
+    do ii =1, n_inv
+    	aux1x = aux1x + aux1(:,:,ii)
+    end do
+    do i=1,nflux
+       aux1x(i,i) = aux1x(i,i) + error(i)**2
+    enddo
+    call matinv(aux1x,nflux,nflux,aux2)
+    do ii=1, n_inv
+    	aux3(:,:,ii) = matmul(transpose(kk(:,:,ii)),aux2)
+    	w(:,:,ii) = matmul(s,aux3(:,:,ii))
+    	delta(:,ii) = alpha(ii) * matmul(w(:,:,ii),(spec_obs-spec_syn))
+    	A(:,:,ii) = alpha(ii) * matmul(w(:,:,ii),kk(:,:,ii))
+        dr(ii) = sum((/ (A(i,i,ii), i=1, size(A, 1)) /))
+    end do    
+    do ii = 1, n_inv
+    	do i=1, nlevel
+       	   sigma(i,ii) = alpha(ii) * sqrt(dot_product(w(i,:,ii)**2,error**2))
+    	end do
+    end do
+
+With this, the only thing we have to do is to add delta to its corresponding pta profile, and then redo the algorithm as long as you want (in my case as long as the chi^2 between the last and the current iteration is lower than the 1%). There are several parts of the code that are not explained, but they are out of the scope of this explanation and you are free to investigate by yourself.
