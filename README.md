@@ -20,3 +20,7 @@ The main calculation for the radiance is based on the integration of the blackbo
     call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,synthetic)
     deallocate(radiance)
     deallocate(fnu)
+
+
+As can be seen, the convolution.f90 function must be invoked, since the spectra is generated at a super high resolution due to the data from the databases, but since we want to compare the results with the spectra obtained by an instrument (for example the JWST), we must convolve the data. Due to the JWST has a variable resolution along the wavelength range, we need a file called resolution.txt where we specify the resolution of the instrument, for a wavenumber range BIGGER than the range studied, since the subroutine interpolation (in read_file.f90) needs this condition for the interpolation.
+Here you see the convolution and the interpolation routines without the part of the code where we define the variables (thank you, Fortran :unamused: )
