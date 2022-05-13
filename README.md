@@ -161,16 +161,16 @@ As mentioned, in the .pta we have data of the molecules and temperature. The ord
 
 Finally, we specify which molecules you want to invert. For that, if you want to invert temperature, you must put a 1 in the ch5 row, and then, if you want to invert a specific molecule, write a 2 in its row. You can only invert temperature by putting only a 1 in ch5, or invert only abondances by putting only 2 in t=all the molecules you want to invert. If you just want to create a synthetic spectra based on your .pta profiles, put all to zero. In this case we want to invert temperature (1 in ch5) and ammonia (2 in nh3):
 
-	01.758 ! latitude (degree)
-  	1.000 ! cos(incidence angle)
-  	1.080 ! cos(emergence angle)
-  	0.500 ! fwhm (cm-1)
-    	ch5 1.080E+00 1
-   	ch3e 1.754E+03 0
-    	nh3 1.080E+00 2
-    	ph3 1.080E+00 0
-   	c2h3 1.080E+00 0
-   	c2h6 1.080E+00 0
+ 01.758 ! latitude (degree)
+  1.000 ! cos(incidence angle)
+  1.080 ! cos(emergence angle)
+  0.500 ! fwhm (cm-1)
+    ch5 1.080E+00 1
+   ch3e 1.754E+03 0
+    nh3 1.080E+00 2
+    ph3 1.080E+00 0
+   c2h3 1.080E+00 0
+   c2h6 1.080E+00 0
 
 Finally, after the inversion you will get new .res, .inv, .avg and .sum files. In .res you will get your real and synthetic spectra. In .avg you will get as many columns as free vectors, and they are the kernel of that inversion (you can use it to see where the information comes from). The .sum tells you the number of iterations, the final chi2 and the degrees of freedom of every free vector. Finally, in the .inv file, we will get a first pressure column, followed by a temperature column (these two columns will always appear, independently from inverting the temperature or not). The next columns will be the inversion of your molecules, then a 'NaN' column, and finally the sigma of every inversion. So in our case the first column is the pressure, the second the temperature (in our case inverted), the third the inverted ammonia profile, then the 'NaN' and then the sigma of T and the sigma of NH3.
 
@@ -183,5 +183,6 @@ Finally, after the inversion you will get new .res, .inv, .avg and .sum files. I
   	0.71E+01 305.8 0.246E-03 NaN       0.256E-03 0.136E-03
   	0.67E+01 300.5 0.248E-03 NaN       0.316E-03 0.169E-03
   	0.63E+01 295.4 0.251E-03 NaN       0.386E-03 0.208E-03
+                               ...
 
 With this you know the basis of the code.
