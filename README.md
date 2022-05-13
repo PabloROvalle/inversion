@@ -84,4 +84,6 @@ If we develop the equation, we can calculate the jacobian and store it in the kk
 
 ## Inversion algorithm
 
+From Conrath et al. 1998, we can finally meet to the final equation needed to retrieve the 'correct' profiles:
 
+![\\Large U=(\alpha_1 K_1SK_1^T+\alpha_2 K_2SK_2^T + E^2)^{-1}](https://latex.codecogs.com/svg.latex?\Large&space;U=(\alpha_1 K_1SK_1^T+\alpha_2 K_2SK_2^T + E^2)^{-1})
