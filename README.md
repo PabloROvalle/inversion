@@ -24,3 +24,32 @@ The main calculation for the radiance is based on the integration of the blackbo
 
 As can be seen, the convolution.f90 function must be invoked, since the spectra is generated at a super high resolution due to the data from the databases, but since we want to compare the results with the spectra obtained by an instrument (for example the JWST), we must convolve the data. Due to the JWST has a variable resolution along the wavelength range, we need a file called resolution.txt where we specify the resolution of the instrument, for a wavenumber range BIGGER than the range studied, since the subroutine interpolation (in read_file.f90) needs this condition for the interpolation.
 Here you see the convolution and the interpolation routines without the part of the code where we define the variables (thank you, Fortran :unamused: )
+
+    do i=1, nflux
+         where (abs(fnu - wave(i)) < 2.5*fwhm(i))
+            aux = 2**(-((fnu-wave(i))/(fwhm(i)/2.))**2)
+         elsewhere
+            aux = 0.
+         end where
+         synthetic(i) = sum(radiance*aux) / sum(aux)
+    enddo
+!==========================================================
+    open (unit=33, file='resolution.txt', status='old', action='read')
+	read(33,*) filesize
+	allocate (f(filesize), k(filesize))
+	do i=1,filesize
+           read(33,*) f(i), k(i)
+        enddo
+	close(1)
+  
+ 	 allocate(xVal(size(wave)))
+ 	 xVal = wave
+ 	 allocate(fwhm(size(wave)))
+  
+  	 do inputIndex = 1, size(xVal)
+   	    do a = 1, size(f)-1
+	       if (xVal(inputIndex)<=f(a) .AND. (xVal(inputIndex)>=f(a+1))) then
+	          fwhm(inputIndex) = ((xVal(inputIndex) - f(a))/(f(a+1)-f(a)))*(k(a+1)-k(a))+k(a)
+               end if
+            enddo
+         enddo
