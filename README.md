@@ -12,4 +12,11 @@ data to know the opacities of the molecules in our model. These files use de .op
 
 The main calculation for the radiance is based on the integration of the blackbody radiation in our atmosphere, multiplied by the transmitance in that specific height, which in a numerical calculation means that we will sum the blackbody of every layer multiplied by the gradient of optical thickness in that layer (see the code to check the previous modifications in the optical thickness before arriving to this step).
 
-<img src="https://latex.codecogs.com/gif.latex?T = hck^2 " /> 
+    allocate(radiance((repmin-1)*nfreq+1:repmax*nfreq))
+    radiance = 0.
+    do k = 1, nlevel-1
+       radiance = radiance + (hc2*fnu**3) / (exp(fnu/aux_T(k)) - 1.) * (tau(:,k+1) - tau(:,k))
+    enddo
+    call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,synthetic)
+    deallocate(radiance)
+    deallocate(fnu)
