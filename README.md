@@ -34,6 +34,7 @@ Here you see the convolution and the interpolation routines without the part of 
          synthetic(i) = sum(radiance*aux) / sum(aux)
     enddo
 !==========================================================
+
     open (unit=33, file='resolution.txt', status='old', action='read')
 	read(33,*) filesize
 	allocate (f(filesize), k(filesize))
