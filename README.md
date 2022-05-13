@@ -129,3 +129,59 @@ The S array will make that the free vectors will change with a maximum variation
     end do
 
 With this, the only thing we have to do is to add delta to its corresponding pta profile, and then redo the algorithm as long as you want (in my case as long as the chi^2 between the last and the current iteration is lower than the 1%). There are several parts of the code that are not explained, but they are out of the scope of this explanation and you are free to investigate by yourself.
+
+## Example
+
+Lets say that we want to invert, at the same time, temperature and ammonia abundances. First we need the spectra, which is stored in the .spe file. There the first column is the wavenumber, the second the radiance in W cm^-2 sr^-1 / cm^-1 and the third one the error. The first value indicates the length of the file (number of rows). 
+
+      871
+      862.06  9.03333e-08  3.00000e-10
+      862.34  8.79264e-08  3.00000e-10
+      862.63  8.46567e-08  3.00000e-10
+      862.92  8.21619e-08  3.00000e-10
+      863.21  8.39743e-08  3.00000e-10
+      863.50  8.65949e-08  3.00000e-10
+      863.79  8.73493e-08  3.00000e-10
+      864.07  8.58774e-08  3.00000e-10
+                 ...
+      
+As mentioned, in the .pta we have data of the molecules and temperature. The order is Pressure (bar), Temperature (K), abond: Methane, Methane deuterated, Ammonia, Phosphine, Acetylene and Ethane.
+
+	1.00E+01 339.1 2.10E-03 1.60E-07 2.36E-04 7.00E-07 4.60E-13 2.91E-09 0.00E+00
+	9.44E+00 333.4 2.10E-03 1.60E-07 2.36E-04 7.00E-07 4.80E-13 3.03E-09 0.00E+00
+	8.91E+00 327.7 2.10E-03 1.60E-07 2.36E-04 7.00E-07 5.01E-13 3.15E-09 0.00E+00
+	8.41E+00 322.0 2.10E-03 1.60E-07 2.36E-04 7.00E-07 5.22E-13 3.28E-09 0.00E+00
+	7.94E+00 316.6 2.10E-03 1.60E-07 2.36E-04 7.00E-07 5.45E-13 3.42E-09 0.00E+00
+	7.50E+00 311.3 2.10E-03 1.60E-07 2.36E-04 7.00E-07 5.68E-13 3.56E-09 0.00E+00
+	7.08E+00 305.9 2.10E-03 1.60E-07 2.36E-04 7.00E-07 5.93E-13 3.70E-09 0.00E+00
+	6.68E+00 300.6 2.10E-03 1.60E-07 2.36E-04 7.00E-07 6.18E-13 3.85E-09 0.00E+00
+	6.31E+00 295.5 2.10E-03 1.60E-07 2.36E-04 7.00E-07 6.45E-13 4.02E-09 0.00E+00
+	5.96E+00 290.5 2.10E-03 1.60E-07 2.36E-04 7.00E-07 6.72E-13 4.18E-09 0.00E+00
+                                             ...
+
+Finally, we specify which molecules you want to invert. For that, if you want to invert temperature, you must put a 1 in the ch5 row, and then, if you want to invert a specific molecule, write a 2 in its row. You can only invert temperature by putting only a 1 in ch5, or invert only abondances by putting only 2 in t=all the molecules you want to invert. If you just want to create a synthetic spectra based on your .pta profiles, put all to zero. In this case we want to invert temperature (1 in ch5) and ammonia (2 in nh3):
+
+	01.758 ! latitude (degree)
+  	1.000 ! cos(incidence angle)
+  	1.080 ! cos(emergence angle)
+  	0.500 ! fwhm (cm-1)
+    	ch5 1.080E+00 1
+   	ch3e 1.754E+03 0
+    	nh3 1.080E+00 2
+    	ph3 1.080E+00 0
+   	c2h3 1.080E+00 0
+   	c2h6 1.080E+00 0
+
+Finally, after the inversion you will get new .res, .inv, .avg and .sum files. In .res you will get your real and synthetic spectra. In .avg you will get as many columns as free vectors, and they are the kernel of that inversion (you can use it to see where the information comes from). The .sum tells you the number of iterations, the final chi2 and the degrees of freedom of every free vector. Finally, in the .inv file, we will get a first pressure column, followed by a temperature column (these two columns will always appear, independently from inverting the temperature or not). The next columns will be the inversion of your molecules, then a 'NaN' column, and finally the sigma of every inversion. So in our case the first column is the pressure, the second the temperature (in our case inverted), the third the inverted ammonia profile, then the 'NaN' and then the sigma of T and the sigma of NH3.
+
+ 	0.10E+02 339.1 0.238E-03 NaN       0.651E-04 0.332E-04
+  	0.94E+01 333.4 0.239E-03 NaN       0.831E-04 0.427E-04
+  	0.89E+01 327.7 0.240E-03 NaN       0.105E-03 0.546E-04
+  	0.84E+01 322.0 0.241E-03 NaN       0.133E-03 0.693E-04
+  	0.79E+01 316.5 0.242E-03 NaN       0.167E-03 0.874E-04
+  	0.75E+01 311.2 0.244E-03 NaN       0.207E-03 0.109E-03
+  	0.71E+01 305.8 0.246E-03 NaN       0.256E-03 0.136E-03
+  	0.67E+01 300.5 0.248E-03 NaN       0.316E-03 0.169E-03
+  	0.63E+01 295.4 0.251E-03 NaN       0.386E-03 0.208E-03
+
+With this you know the basis of the code.
