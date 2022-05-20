@@ -47,16 +47,8 @@ program jupiter_ch4
        end if
   end do    
 
-  numinv = sum(inv)
-  shift = 0
-  if (MOD(numinv,2) .eq. 0) then
-      shift = 0
-  else
-      shift = 1
-  end if
-
   if (n_inv == 0) then
-    call info_content_ch4(p,t,profil,p_mol,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv)
+    call info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv)
   else   
     allocate(kk(size(wave),nlevel,n_inv))
     allocate(A(nlevel,nlevel,n_inv))
@@ -64,7 +56,7 @@ program jupiter_ch4
     i = 0
     ochi2 = 1e38
     do
-      call info_content_ch4(p,t,profil,p_mol,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv,kk)
+      call info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv,kk)
       chi2 = sum(((spec_syn-spec_obs)/error)**2)
       print*, 'inverse --> ', i, ochi2, chi2
       print*,'chi2 --> ', abs(chi2-ochi2)/chi2

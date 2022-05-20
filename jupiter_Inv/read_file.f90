@@ -113,9 +113,12 @@ contains
     real, dimension(nlevel), intent(in) :: p, t
     real, dimension(nlevel,n_inv), intent(in) :: sigma
     integer, dimension(n_inv), intent(in) :: inv_pos
+    integer, dimension(n_inv-1) :: inv_pos_red
     real, dimension(nlevel, nmol), intent(in) :: profil
     real, dimension(nmol), intent(in) :: vmr
 
+    inv_pos_red = inv_pos(1:size(inv_pos)-1)
+ 
     open(12,file=file_out,status='unknown',form='formatted')
     do j=1, nlevel
        write(12,'(E10.2,F6.1,16E10.3)') p(j),t(j),profil(j,inv_pos)/vmr(inv_pos), sigma(j,:)

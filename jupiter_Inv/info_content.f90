@@ -4,7 +4,7 @@ module info_content
 
 contains
   
-  subroutine info_content_ch4(p,t,profil,p_mol,taucloud,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,kk)
+  subroutine info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,kk)
 
     use declaration, only : nfreq, nrep, nlevel, nmol, nt, T_tab, gnu00,dgnu,dgnu_H2, dens, planck, rg, avo, cvel, boltz, H2, He
     use gravity
@@ -15,7 +15,8 @@ contains
     integer :: i, j, j1, k, l, it, nin, rec, n, ii, ix, numinv
     integer, intent(in) :: p_mol, nflux, n_inv
     integer, intent(in), dimension(p_mol) :: inv
-    integer :: repmin, repmax, imol_inv, shift
+    integer :: repmin, repmax, imol_inv
+    integer, intent(out) :: shift
 
     character (len=*), dimension(nmol), intent(in) :: file_opa
 
@@ -245,6 +246,7 @@ contains
     real, dimension(nflux,nflux, n_inv) :: aux1
     real, dimension(nflux,nflux) :: aux1x, aux2
 !------------------------------------------------------------------------------
+! Covariance array, try with the Levenberg-Marquardt method
     do i=1,nlevel
        do j=1,nlevel
           s(i,j) = exp( -alog(p(i)/p(j))**2 / (2*c**2))
