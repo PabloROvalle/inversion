@@ -22,13 +22,13 @@ program jupiter_ch4
   real, dimension(:,:,:), allocatable :: kk
   real, dimension(nmol) :: vmr
   real, dimension(nlevel,nmol) :: profil
-  real, dimension(nlevel) :: p, t, taucloud, grav
+  real, dimension(nlevel) :: p, t, taucloud, grav, tauhaze
   real, dimension(:), allocatable :: wave, spec_obs, spec_syn, error, fwhm, dr
   real, dimension(:,:), allocatable :: delta, sigma_delta
   real, dimension(:,:,:), allocatable :: A
 !==============================================================================
   call read_fuel(file_fuel,lat,mui,mue,p_mol,vmr,inv,arr_inv,cloudstate,file_opa)
-  call read_pta(file_pta,p_mol,vmr,p,T,profil,taucloud)
+  call read_pta(file_pta,p_mol,vmr,p,T,profil,taucloud, tauhaze)
 
   call read_spe(file_spe,wave,spec_obs,error)
   call Interpolate(wave, fwhm)
@@ -51,7 +51,7 @@ program jupiter_ch4
   end do    
 
   if (n_inv == 0) then
-    call info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv)
+    call info_content_ch4(p,t,profil,p_mol,shift,taucloud,tauhaze,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv)
   else   
     allocate(kk(size(wave),nlevel,n_inv))
     allocate(A(nlevel,nlevel,n_inv))
@@ -60,7 +60,7 @@ program jupiter_ch4
 !    ochi2 = 1e38
     ochi2 = sum(((spec_obs-spec_syn)/error)**2)
     do
-      call info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv,kk)
+      call info_content_ch4(p,t,profil,p_mol,shift,taucloud,tauhaze,lat,mue,fwhm,file_opa,size(wave),wave,spec_syn,n_inv,inv,kk)
       chi2 = sum(((spec_syn-spec_obs)/error)**2)
       print*, 'inverse --> ', i, ochi2, chi2
       print*,'chi2 --> ', abs(chi2-ochi2)/chi2

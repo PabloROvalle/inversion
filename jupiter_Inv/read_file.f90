@@ -42,7 +42,7 @@ contains
 
   end subroutine read_fuel
 
-  subroutine read_pta(file_in,p_mol,vmr,p,T,profil,taucloud)
+  subroutine read_pta(file_in,p_mol,vmr,p,T,profil,taucloud, tauhaze)
 
     use declaration, only : nmol, nlevel
 
@@ -51,13 +51,13 @@ contains
     integer, intent(in) :: p_mol
     integer :: k,l
     real, dimension(nmol), intent(in) :: vmr
-    real, dimension(nlevel), intent(out) :: p, T, taucloud
+    real, dimension(nlevel), intent(out) :: p, T, taucloud, tauhaze
     real, dimension(nlevel,nmol), intent(out) :: profil
 
     !====================================================
     open(9,file=file_in,status='old',form='formatted')
     do k=1, nlevel
-       read(9,'(E9.2,F6.1,10E9.2)') p(k), T(k), (profil(k,l),l=1,p_mol), taucloud(k)
+       read(9,'(E9.2,F6.1,10E9.2)') p(k), T(k), (profil(k,l),l=1,p_mol), taucloud(k), tauhaze(k)
     end do
 
     do l=1, p_mol

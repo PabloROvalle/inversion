@@ -14,7 +14,7 @@ different alphas (alpha,beta,gamma...) and traces as a function of the number of
 Write_kernel now prints the kernel array for every of the profiles inverted (temperature or abundances).
 
 Currently the write_inv routine writes the pressure column along with the temperature (always shown) inverted profiles columns and
-then the sigmas for the molecules inverted, separated by a 'NaN' column (can be removed by changing inv_pos for inv_pos_red in write_inv routine) .
+then the sigmas for the molecules inverted, separated by a 'NaN' column.
 
 HOW IT WORKS: The code now is much more simple to use. You will need a .pta file with your a priori profiles, and a .spe file with
 your real spectra. In .fuel you will specify which molecules you want to invert marking them with a 2. CAUTION: If you are inverting

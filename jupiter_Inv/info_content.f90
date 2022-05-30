@@ -4,7 +4,7 @@ module info_content
 
 contains
   
-  subroutine info_content_ch4(p,t,profil,p_mol,shift,taucloud,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,kk)
+  subroutine info_content_ch4(p,t,profil,p_mol,shift,taucloud,tauhaze,lat,mue,fwhm,file_opa,nflux,wave,synthetic,n_inv,inv,kk)
 
     use declaration, only : nfreq, nrep, nlevel, nmol, nt, T_tab, gnu00,dgnu,dgnu_H2, dens, planck, rg, avo, cvel, boltz, H2, He
     use gravity
@@ -27,7 +27,7 @@ contains
     real, dimension(nlevel,nmol), intent(in) ::  profil
     real, dimension(nlevel,p_mol) ::  colonne
     real, dimension(nflux,nlevel,n_inv), optional :: kk
-    real, dimension(nlevel), intent(in) :: p, T,taucloud
+    real, dimension(nlevel), intent(in) :: p, T,taucloud, tauhaze
     real, dimension(nlevel) :: aux_T, grav, z, nz, f
     real, dimension(nflux), intent(in) :: wave, fwhm
     real, dimension(nflux), intent(inout) :: synthetic
