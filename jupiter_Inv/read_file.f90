@@ -4,16 +4,16 @@ module read_file
   
 contains
 
-  subroutine read_fuel(file_in,lat,mui,mue,p_mol,vmr,inv,arr_inv,file_opa)
+  subroutine read_fuel(file_in,lat,mui,mue,p_mol,vmr,inv,arr_inv,cloudstate,file_opa)
     
     use declaration, only : nmol, file_root
     implicit None
 
-    character (len=7) :: gas
+    character (len=7) :: gas, cloud
     character (len=*), intent(in) :: file_in
     character (len=*), dimension(nmol), intent(out) :: file_opa
     integer :: l, eof, ninv2
-    integer, intent(out) :: p_mol
+    integer, intent(out) :: p_mol, cloudstate
     integer, dimension(nmol), intent(out) :: inv
     integer, dimension(nmol), intent(out) :: arr_inv
     real, intent(out) :: mui, mue, lat
@@ -23,7 +23,8 @@ contains
     open(15,file=file_in,status='old',form='formatted')
     read(15,'(F7.3)')lat ; read(15,'(F7.3)')mui ; read(15,'(F7.3)')mue
     read(15,*)
-    read(15,*)
+    read(15,'(A7, I2)')cloud, cloudstate
+    print*, 'cloudinv', cloudstate
     read(15,*)
     
     do l=1, nmol
@@ -33,7 +34,6 @@ contains
        p_mol = l
     end do
     close(15)
-
   ninv2 = count(inv>0)
 
   do l=1, nmol

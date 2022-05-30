@@ -15,7 +15,7 @@ contains
     integer :: i, j, j1, k, l, it, nin, rec, n, ii, ix, numinv
     integer, intent(in) :: p_mol, nflux, n_inv
     integer, intent(in), dimension(p_mol) :: inv
-    integer :: repmin, repmax, imol_inv
+    integer :: repmin, repmax
     integer, intent(out) :: shift
 
     character (len=*), dimension(nmol), intent(in) :: file_opa
@@ -115,7 +115,6 @@ contains
        rec = (it + (k-1)*nt - 1) * nrep
        ii = 1
        do l = 1,p_mol
-         imol_inv = sum(inv(1:l))/2
          do n = repmin, repmax
             j1 = (n-1) * nfreq
             read(7+l, rec=rec+n) coef(:,1)
@@ -197,6 +196,7 @@ contains
     do l=1, p_mol
      if (inv(l) == 1) then
 !==============================================Derivee temperature
+         radiance = 0.
          do k = 1, nlevel-1
             radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) *(tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-1)*nfreq+1:repmax*nfreq:10,k))
             call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,1))
@@ -204,7 +204,7 @@ contains
 
      elseif (inv(l) == 2) then
 !==============================================Derivee abondance
-         radiance = 0
+         radiance = 0.
          do k=1, nlevel-2
             radiance = radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:10,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
             call convol_jwst(size(radiance),radiance*kappa(::10,k,ii)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
@@ -215,9 +215,9 @@ contains
 !==============================================
 
 !**************************
-    do k = 1, nlevel-1
-       kk(:,k,:) = f(k)*kk(:,k,:)
-    enddo
+!    do k = 1, nlevel-1
+!       kk(:,k,:) = f(k)*kk(:,k,:)
+!    enddo
 !**************************
 
   end subroutine info_content_ch4
@@ -246,7 +246,7 @@ contains
     real, dimension(nflux,nflux, n_inv) :: aux1
     real, dimension(nflux,nflux) :: aux1x, aux2
 !------------------------------------------------------------------------------
-! Covariance array, try with the Levenberg-Marquardt method
+
     do i=1,nlevel
        do j=1,nlevel
           s(i,j) = exp( -alog(p(i)/p(j))**2 / (2*c**2))
@@ -254,18 +254,18 @@ contains
     enddo
 
     trace_error = sum((/(error(i)**2,i=1,nflux)/) / sqrt(real(nflux,kind=4)))
-    
-    do ii=1, n_inv  
-    	aux(:,:,ii) = matmul(kk(:,:,ii),s) 
-    	aux1(:,:,ii) = matmul(aux(:,:,ii),transpose(kk(:,:,ii)))
-    	trace_temp(ii) = sum((/(aux1(i,i,ii),i=1,nflux)/))
-    	alpha(ii) = factor * (trace_error/trace_temp(ii))
+
+    do ii=1, n_inv
+        aux(:,:,ii) = matmul(kk(:,:,ii),s)
+        aux1(:,:,ii) = matmul(aux(:,:,ii),transpose(kk(:,:,ii)))
+        trace_temp(ii) = sum((/(aux1(i,i,ii),i=1,nflux)/))
+        alpha(ii) = factor * (trace_error/trace_temp(ii))
         aux1(:,:,ii) = alpha(ii)*aux1(:,:,ii)
     end do
-     
+
     aux1x = 0
     do ii =1, n_inv
-    	aux1x = aux1x + aux1(:,:,ii)
+        aux1x = aux1x + aux1(:,:,ii)
     end do
 
     do i=1,nflux
@@ -275,18 +275,18 @@ contains
     call matinv(aux1x,nflux,nflux,aux2)
 
     do ii=1, n_inv
-    	aux3(:,:,ii) = matmul(transpose(kk(:,:,ii)),aux2)
-    	w(:,:,ii) = matmul(s,aux3(:,:,ii))
-    	delta(:,ii) = alpha(ii) * matmul(w(:,:,ii),(spec_obs-spec_syn))
-    	A(:,:,ii) = alpha(ii) * matmul(w(:,:,ii),kk(:,:,ii))
+        aux3(:,:,ii) = matmul(transpose(kk(:,:,ii)),aux2)
+        w(:,:,ii) = matmul(s,aux3(:,:,ii))
+        delta(:,ii) = alpha(ii) * matmul(w(:,:,ii),(spec_obs-spec_syn))
+        A(:,:,ii) = alpha(ii) * matmul(w(:,:,ii),kk(:,:,ii))
         dr(ii) = sum((/ (A(i,i,ii), i=1, size(A, 1)) /))
-    end do    
+    end do
 
 
     do ii = 1, n_inv
-    	do i=1, nlevel
-       	   sigma(i,ii) = alpha(ii) * sqrt(dot_product(w(i,:,ii)**2,error**2))
-    	end do
+        do i=1, nlevel
+           sigma(i,ii) = alpha(ii) * sqrt(dot_product(w(i,:,ii)**2,error**2))
+        end do
     end do
 
   end subroutine coeur_ch4

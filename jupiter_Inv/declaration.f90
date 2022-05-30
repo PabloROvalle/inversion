@@ -8,7 +8,7 @@ module declaration
 
   real, parameter :: H2=0.8616, He=0.136, CH4=2.4e-3
   real, parameter :: dens = 2.0158e-03*H2 + 4.0026e-03*He + 16.043e-03*CH4
-  real, parameter :: RJup=71492e3, J2jup=14.696572,J4jup=-586.609, J6jup=34.198, omega=0.413542, ellip=0.0648744, MassJup=1898.18722
+  real, parameter :: RJup=71492e3, J2jup=14.736,J4jup=-587, J6jup=31, omega=0.413542, ellip=0.0648744, MassJup=1898.18722
   real, parameter :: avo=6.02214e23, boltz=1.38066e-23, cvel=2.99792e+10, planck=6.62608e-34, rg=8.31451, Tref=296.
   real, parameter :: Grav = 6.67408E-11, pi= 3.141592654
 
