@@ -21,4 +21,17 @@ your real spectra. In .fuel you will specify which molecules you want to invert 
 a molecule in a spectral region where there is NO information of it, you will get an error, so please try to add only the molecules
 which will have an impact on the region you are studying.
 
-last mod: 13th May 2022 by Pablo Rodriguez Ovalle
+UPDATE NOVEMBER 2022
+
+This new version has spherical geometry, whic allows the retrieval of the spectra at high latitudes (but not very close to the limb). Other several changes were done, the model has two cloud layers that can be cativated in .fuel with cloud = 1 activating the retrieval of tropospheric opacity of the clouds and cloud = 2 activating the retrieval of stratospheric opacity of hazes.
+
+The .avg file gives us the A matrix to know where the information comes from, the .sum file summarizes some information on the retrieval.
+
+We can now invert also the temperature and methane profile (not recommended) by putting a 3 instead of a 1 or 2 in the .fuel ch4 row.
+
+Some masking is applied to the jacobian to remove some non physical values close to the border of the height grid.
+
+In info_content.f90, in coeur routine we have two functions (f and f2) to activate a threshold to let some profiles to change or not. For the retrieval of the hydrocarbons, f must be activated so 'delta(:,1) = delta(:,1)*f(:)' must be activated.
+
+
+last mod: 18th November 2022 by Pablo Rodriguez Ovalle
