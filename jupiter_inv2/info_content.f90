@@ -12,11 +12,7 @@ contains
 
     implicit none
 
-<<<<<<< HEAD
     integer :: i, j, j1, k, l, it, nin, rec, n, ii, ix, numinv, div
-=======
-    integer :: i, j, j1, k, l, it, nin, rec, n, ii, ix, numinv
->>>>>>> main
     integer, intent(in) :: p_mol, nflux, n_inv
     integer, intent(in), dimension(p_mol) :: inv
     integer :: repmin, repmax
@@ -26,22 +22,14 @@ contains
     character (len=*), dimension(nmol), intent(in) :: file_opa
 
     real, intent(in) :: lat, mue
-<<<<<<< HEAD
     real :: hc2, hck, dt, radius
-=======
-    real :: hc2, hck, dt
->>>>>>> main
     real, dimension(2000) :: ftab
     real, dimension(2000,nlevel) :: tabH2
     real, dimension(nlevel,nmol), intent(in) ::  profil
     real, dimension(nlevel,p_mol) ::  colonne
     real, dimension(nflux,nlevel,n_inv), optional :: kk
     real, dimension(nlevel), intent(in) :: p, T, cloudinv, taucloud
-<<<<<<< HEAD
     real, dimension(nlevel) :: aux_T, grav, z, nz, f, mu
-=======
-    real, dimension(nlevel) :: aux_T, grav, z, nz, f
->>>>>>> main
     real, dimension(nflux), intent(in) :: wave, fwhm
     real, dimension(nflux), intent(inout) :: synthetic
     real, dimension(:,:,:), allocatable ::  kappa
@@ -65,7 +53,6 @@ contains
 !---- Grille d'altitude et de gravite
     z(41) = 0.
     do k=41, nlevel-1
-<<<<<<< HEAD
        call newgrav(lat,z(k)/1e3,grav(k), radius)
        z(k+1) = z(k) + (rg*(T(k)+T(k+1))/2./dens/grav(k)) * alog(p(k)/p(k+1))
     enddo
@@ -78,17 +65,6 @@ contains
 !----Angle en géométrie sphérique
      mu = sqrt(1-(radius/(radius+z/1e3)*sqrt(1-mue**2))**2)
  
-=======
-       call newgrav(lat,z(k)/1e3,grav(k))
-       z(k+1) = z(k) + (rg*(T(k)+T(k+1))/2./dens/grav(k)) * alog(p(k)/p(k+1))
-    enddo
-    call newgrav(lat,z(nlevel)/1e3,grav(nlevel))
-    do k=41, 2, -1
-       call newgrav(lat,z(k)/1e3,grav(k))
-       z(k-1) = z(k) + (rg*(T(k)+T(k-1))/2./dens/grav(k)) * alog(p(k)/p(k-1))
-    enddo
-    call newgrav(lat,z(1)/1e3,grav(1))
->>>>>>> main
 !----Colonne densite
     colonne = reshape(p,(/nlevel,p_mol/),pad=p)
     colonne = (colonne-eoshift(colonne,shift=1)) * profil
@@ -105,10 +81,7 @@ contains
     allocate(tau((repmin-1)*nfreq+1:repmax*nfreq,nlevel))
 
     if (maxval(inv) == 2) allocate(kappa((repmin-1)*nfreq+1:repmax*nfreq,nlevel,n_inv))
-<<<<<<< HEAD
     if (maxval(inv) == 3) allocate(kappa((repmin-1)*nfreq+1:repmax*nfreq,nlevel,n_inv-1))
-=======
->>>>>>> main
 
     allocate(fnu((repmin-1)*nfreq+1:repmax*nfreq))
     fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1)/)
@@ -152,7 +125,6 @@ contains
             j1 = (n-1) * nfreq
             read(7+l, rec=rec+n) coef(:,1)
             read(7+l, rec=rec+n+nrep) coef(:,2)
-<<<<<<< HEAD
               
             if (inv(l) == 2 .OR. inv(l) == 3) then
                  kappa(j1+1:j1+nfreq,k,ii) = (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
@@ -162,26 +134,11 @@ contains
          enddo
        
        if (inv(l)==2 .OR. inv(l)==3)  then
-=======
-
-            if (inv(l) == 2) then
-                 kappa(j1+1:j1+nfreq,k,ii) = (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
-            end if
-
-            tau(j1+1:j1+nfreq,k) = tau(j1+1:j1+nfreq,k) + (coef(:,1)**(1-dt))*(coef(:,2)**dt)*colonne(k,l)
-         enddo
-      
-       if (inv(l)==2) then
->>>>>>> main
           ii = ii+1
        endif
        enddo
     enddo
-<<<<<<< HEAD
     print*, inv
-=======
-
->>>>>>> main
     do l = 1, p_mol
        close(7+l)
     enddo
@@ -192,7 +149,6 @@ contains
        tau(:,k)=tau(:,k)+taucloud(k)
     end do
 
-<<<<<<< HEAD
 !!!!!!!! 3D GEOMETRY !!!!!!!!!
     tau(:,nlevel) = tau(:,nlevel)/mu(nlevel)
     do k = nlevel-1, 1, -1
@@ -200,15 +156,6 @@ contains
     end do
     do k = 1, nlevel
        tau(:,k) = exp(-tau(:,k))
-=======
-!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    do k = nlevel-1, 1, -1
-       tau(:,k) = tau(:,k+1) + tau(:,k)
-    end do
-    do k = 1, nlevel
-       tau(:,k) = exp(-tau(:,k)/mue)
->>>>>>> main
     end do
     
     hc2 = 2 * planck * cvel**2
@@ -216,20 +163,6 @@ contains
     aux_T = 0.5 * (T+eoshift(T,1,T(size(T)))) / hck
     dt = 1. / hck
 
-<<<<<<< HEAD
-=======
-!******************** CUTOFF UPPER ATMOSPHERE *************************
-    do i=1,nlevel
-       nz(i) = i-1
-    end do
-
-    do i=1,nlevel
-    	f(i) = (TANH((nz(i)-220)/(27*0.5))+1)/2
-    end do
-    f = abs(1-f)
-!**********************************************************************
-
->>>>>>> main
 !==============================================Calcul spectre
     allocate(radiance((repmin-1)*nfreq+1:repmax*nfreq))
     radiance = 0.
@@ -239,7 +172,6 @@ contains
     call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,synthetic)
     deallocate(radiance)
     deallocate(fnu)
-<<<<<<< HEAD
     
     div = 5    
 
@@ -248,14 +180,6 @@ contains
     allocate(fnu((repmin-1)*nfreq/div+1:repmax*nfreq/div))
     fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1,div)/)
     allocate(radiance((repmin-1)*nfreq/div+1:repmax*nfreq/div)) 
-=======
-
-    if (n_inv == 0) return
-    
-    allocate(fnu((repmin-1)*nfreq/10+1:repmax*nfreq/10))
-    fnu = gnu00 + dgnu*(/(j, j=(repmin-1)*nfreq,repmax*nfreq-1,10)/)
-    allocate(radiance((repmin-1)*nfreq/10+1:repmax*nfreq/10)) 
->>>>>>> main
     ii = 1
 
     numinv = sum(inv)
@@ -265,7 +189,6 @@ contains
     else
         shift = 1
     end if
-<<<<<<< HEAD
     print*, shape(kk)
     print*, shape(kappa)
 
@@ -286,24 +209,6 @@ contains
          do k=1, nlevel-2
             radiance = radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:div,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
             call convol_jwst(size(radiance),radiance*kappa((repmin-1)*nfreq+1:repmax*nfreq:div,k,ii)/mu(k),fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
-=======
-
-    do l=1, p_mol
-     if (inv(l) == 1) then
-!==============================================Derivee temperature
-         radiance = 0.
-         do k = 1, nlevel-1
-            radiance = (hc2*fnu**3) * (1./(exp(fnu/(aux_T(k)+dt))-1.) - 1./(exp(fnu/(aux_T(k)))-1.)) *(tau((repmin-1)*nfreq+1:repmax*nfreq:10,k+1) - tau((repmin-1)*nfreq+1:repmax*nfreq:10,k))
-            call convol_jwst(size(radiance),radiance,fwhm,fnu,nflux,wave,kk(:,k,1))
-         end do
-
-     elseif (inv(l) == 2) then
-!==============================================Derivee abondance
-         radiance = 0.
-         do k=1, nlevel-2
-            radiance = radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:10,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
-            call convol_jwst(size(radiance),radiance*kappa(::10,k,ii)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
->>>>>>> main
          enddo
       ii = ii + 1
      endif
@@ -312,7 +217,6 @@ contains
     if (cloudstate /= 0) then
          radiance = 0.
          do k = 1, nlevel-2
-<<<<<<< HEAD
             radiance =radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:div,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
             call convol_jwst(size(radiance),radiance*cloudinv(k)/mu(k),fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
          end do
@@ -324,18 +228,6 @@ contains
         kk(:,:,k) = kk(:,:,k)*merge(1,0,kk(:,:,k)>=-1.0)
     end do
 !*************************
-=======
-            radiance =radiance - (hc2*fnu**3) * tau((repmin-1)*nfreq+1:repmax*nfreq:10,k) *(1./(exp(fnu/aux_T(k))-1.) - 1./(exp(fnu/aux_T(k+1))-1.))
-            call convol_jwst(size(radiance),radiance*cloudinv(k)/mue,fwhm,fnu,nflux,wave,kk(:,k,ii+shift))
-         end do
-    endif
-
-!**************************
-!    do k = 1, nlevel-1
-!       kk(:,k,:) = f(k)*kk(:,k,:)
-!    enddo
-!**************************
->>>>>>> main
 
   end subroutine info_content_ch4
 
@@ -347,11 +239,7 @@ contains
     integer :: i, j, k, ii
     integer, intent(in) :: nflux, n_inv, cloudstate
 
-<<<<<<< HEAD
     Real, parameter :: c=0.75, factor= 3
-=======
-    Real, parameter :: c=0.75, factor=30e-1
->>>>>>> main
 
     real :: trace_haze, trace_error
     real, dimension(n_inv) :: trace_temp, alpha
@@ -361,10 +249,7 @@ contains
     real, dimension(nlevel), intent(in) :: p
     real, dimension(nflux,nlevel, n_inv), intent(in) :: kk
     real, dimension(nlevel,nlevel) :: s
-<<<<<<< HEAD
     real, dimension(nlevel) :: nz, f, f2
-=======
->>>>>>> main
     real, dimension(nlevel,nflux, n_inv) ::  w, aux3
     real, dimension(nlevel,nlevel, n_inv), intent(out) :: A
     real, dimension(nflux,nlevel, n_inv) :: aux
@@ -399,7 +284,6 @@ contains
 
     call matinv(aux1x,nflux,nflux,aux2)
 
-<<<<<<< HEAD
 !******************** CUTOFF UPPER ATMOSPHERE *************************
     do i=1,nlevel
        nz(i) = i-1
@@ -413,8 +297,6 @@ contains
     f2 = abs(1-f2)
 !**********************************************************************
 
-=======
->>>>>>> main
     do ii=1, n_inv
         aux3(:,:,ii) = matmul(transpose(kk(:,:,ii)),aux2)
         w(:,:,ii) = matmul(s,aux3(:,:,ii))
@@ -423,12 +305,9 @@ contains
         dr(ii) = sum((/ (A(i,i,ii), i=1, size(A, 1)) /))
     end do
 
-<<<<<<< HEAD
 delta(:,1) = delta(:,1)*f(:)
 !delta(:,3) = delta(:,3)*f2(:)
 
-=======
->>>>>>> main
     do ii = 1, n_inv
         do i=1, nlevel
            sigma(i,ii) = alpha(ii) * sqrt(dot_product(w(i,:,ii)**2,error**2))

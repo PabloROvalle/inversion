@@ -40,13 +40,9 @@ program jupiter_ch4
   elseif (cloudstate == 0) then
      n_inv = n_inv
   endif
-<<<<<<< HEAD
   if (inv(1) == 3) then
      n_inv = n_inv + 1
   endif
-=======
-
->>>>>>> main
 
   allocate(delta(nlevel,n_inv))
   allocate(sigma_delta(nlevel,n_inv))
@@ -126,11 +122,7 @@ program jupiter_ch4
   end if
 
   call write_res(file_res,size(wave),wave,spec_obs,spec_syn,error)
-<<<<<<< HEAD
   call write_inv(file_inv,p,t,profil,sigma_delta,cloudstate,taucloud,n_inv,inv_pos, vmr, inv, p_mol)
-=======
-  call write_inv(file_inv,p,t,profil,sigma_delta,cloudstate,taucloud,n_inv,inv_pos, vmr)
->>>>>>> main
   if (n_inv /= 0) call write_kernel(file_avg,n_inv,A)
 
 end program jupiter_ch4
