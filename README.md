@@ -186,7 +186,7 @@ Finally, after the inversion you will get new .res, .inv, .avg and .sum files. I
                                ...
 
 
-NOVEMBER 2022 UPDATE (jupiter_inv3)
+*NOVEMBER 2022 UPDATE (jupiter_inv3)*
 
 This new version has spherical geometry, whic allows the retrieval of the spectra at high latitudes (but not very close to the limb). Other several changes were done, the model has two cloud layers that can be cativated in .fuel with cloud = 1 activating the retrieval of tropospheric opacity of the clouds and cloud = 2 activating the retrieval of stratospheric opacity of hazes.
 
@@ -202,4 +202,4 @@ In info_content.f90, in coeur routine we have two functions (f and f2) to activa
 With this you know the basis of the code. 
 If used, please cite some of the original authors of the code (Ex: Fouchet et al. 2000)
 
-Last mod: 15th May 2022 Pablo Rodriguez Ovalle
+Last mod: 22th November 2022 Pablo Rodriguez Ovalle
