@@ -68,7 +68,11 @@ contains
 !      Adapted for general use 29/4/96  Pat Irwin
 !-------------------------------------------------------------------------------
 
+<<<<<<< HEAD
   subroutine newgrav (lat_in, h, g, radius) 
+=======
+  subroutine newgrav (lat_in, h, g) 
+>>>>>>> main
 
     use declaration, only : RJup, J2Jup, J4Jup, J6Jup, omega, ellip, MassJup,&
          Grav, pi
@@ -77,10 +81,17 @@ contains
     ! Latitude (degrees), Height above reference surface (km)
     real, intent(in) :: lat_in, h
     !gravity acc. (m/s2)
+<<<<<<< HEAD
     real, intent(out):: g, radius
     
     integer :: I
     real :: lat, latc, slatc, r, clatc, gtheta, Rr
+=======
+    real, intent(out):: g
+    
+    integer :: I
+    real :: lat, latc, slatc, r, clatc, gtheta, Rr, radius
+>>>>>>> main
     real :: xgm, xradius, xellip, xomega
     real, dimension(3) :: xcoeff
     real, dimension(6) :: pol

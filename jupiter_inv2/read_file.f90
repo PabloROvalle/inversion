@@ -64,14 +64,20 @@ contains
     end do
 
     if (cloudstate==1) then
+<<<<<<< HEAD
       print*, 'reading tropospheric kernel ...'
+=======
+>>>>>>> main
       open(686,file='nh3_clouds.txt',status='old',form='formatted')
       do k=1, nlevel
          read(686,'(E9.2,F2.1)') p(k), cloudinv(k)
       end do
 
     elseif (cloudstate==2) then
+<<<<<<< HEAD
       print*, 'reading stratospheric kernel ...'
+=======
+>>>>>>> main
       open(689,file='ch4_hazes.txt',status='old',form='formatted')
       do k=1, nlevel
          read(689,'(E9.2,F2.1)') p(k), cloudinv(k)
@@ -116,15 +122,24 @@ contains
 
   end subroutine write_res
   
+<<<<<<< HEAD
   subroutine write_inv(file_out,p,t,profil,sigma,cloudstate,taucloud,n_inv,inv_pos,vmr, inv, p_mol)
+=======
+  subroutine write_inv(file_out,p,t,profil,sigma,cloudstate,taucloud,n_inv,inv_pos,vmr)
+>>>>>>> main
 
     use declaration, only: nlevel, nmol
     implicit none
 
+<<<<<<< HEAD
     integer :: j, flag
     character (len=*), intent(in) :: file_out
     integer, intent(in) :: p_mol
     integer, intent(in), dimension(p_mol) :: inv
+=======
+    integer :: j
+    character (len=*), intent(in) :: file_out
+>>>>>>> main
     integer, intent(in) :: n_inv, cloudstate
     real, dimension(nlevel), intent(in) :: p, t, taucloud
     real, dimension(nlevel,n_inv), intent(in) :: sigma
@@ -133,6 +148,7 @@ contains
     real, dimension(nlevel, nmol), intent(in) :: profil
     real, dimension(nmol), intent(in) :: vmr
 
+<<<<<<< HEAD
 	flag = 0
     	do j=1, nmol
          if (inv(j)==3) then
@@ -164,6 +180,18 @@ contains
            		write(12,'(E10.2,F6.1,16E10.3)') p(j),t(j),profil(j,inv_pos)/vmr(inv_pos),taucloud(j),profil(j,2)/vmr(1), sigma(j,:)
         	enddo
     	end if
+=======
+    if (cloudstate == 0) then
+    	open(12,file=file_out,status='unknown',form='formatted')
+    	do j=1, nlevel
+       	   write(12,'(E10.3,F6.1,16E10.3)') p(j),t(j),profil(j,inv_pos)/vmr(inv_pos), sigma(j,:)
+    	enddo
+    elseif (cloudstate /= 0) then
+        open(12,file=file_out,status='unknown',form='formatted')
+        do j=1, nlevel
+           write(12,'(E10.2,F6.1,16E10.3)') p(j),t(j),profil(j,inv_pos)/vmr(inv_pos),taucloud(j), sigma(j,:)
+        enddo
+>>>>>>> main
     end if
     close(12)
 

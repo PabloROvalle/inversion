@@ -3,7 +3,11 @@ module declaration
   character (len=52), parameter :: file_root = '/obs/tfouchet/data/opacite/jupiter/jwst/jupiter_ch4_'
 
   integer, parameter :: nfreq=10000, nrep=150, nraie_max=70000
+<<<<<<< HEAD
   integer, parameter :: nlevel=361, nmol=6, nt=5
+=======
+  integer, parameter :: nlevel=361, nmol=7, nt=5
+>>>>>>> main
   real, parameter :: gnu00=500., dgnu=1e-3, dgnu_H2=2.
 
   real, parameter :: H2=0.8616, He=0.136, CH4=2.4e-3
