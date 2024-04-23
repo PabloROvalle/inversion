@@ -1,0 +1,13 @@
+-20.000 ! latitude (degree)
+  0.820 ! cos(incidence angle)
+  0.825 ! cos(emergence angle)
+  
+  cloud 0 ! 0--> no clouds ; 1--> Tropoclouds ; 2 --> Stratohazes 
+  
+    ch5 1.000E+00 0
+   ch3e 1.624E+03 0
+    nh3 1.000E+00 0
+    ph3 1.000E+00 0
+   c2h3 1.000E+00 0
+   c2h6 1.000E+00 0
+    hcn 1.000E+00 2
